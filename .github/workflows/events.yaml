@@ -1,0 +1,10 @@
+name: using events in Github action pipelines
+
+on: workflow_dispatch
+
+jobs:
+  build_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo "hello world"
+        run: ls
