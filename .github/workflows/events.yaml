@@ -6,5 +6,19 @@ jobs:
   build_job:
     runs-on: ubuntu-latest
     steps:
-      - name: echo "hello world"
-        run: ls
+      - name: basic linux commands
+        run: |
+          ls
+          pwd
+          date
+          uname -avr
+  test_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: use github internal information
+        run: echo "${{github.event}}"
+  deploy_job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: deploy application
+        run: echo "deploying application"
