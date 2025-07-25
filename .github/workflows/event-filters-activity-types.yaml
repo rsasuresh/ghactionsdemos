@@ -1,0 +1,16 @@
+name: Using Filters and Activity Types in Workflows
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  testjob:
+    runs-on: [self-hosted, windows, x64]
+    steps:
+      - name: Echo system info
+        run: |
+          systeminfo
