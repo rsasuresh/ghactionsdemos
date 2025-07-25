@@ -1,0 +1,12 @@
+name: Running workflow in slef hosted runner of github actions
+
+on: workflow_dispatch
+
+jobs:
+  testjob:
+    runs-on: self-hosted
+    steps:
+      - name: echo event name
+        run: echo "${{github.event_name}}"
+      - name: echo runner os
+        run: echo "${{runner.os}}"

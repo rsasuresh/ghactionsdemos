@@ -1,0 +1,157 @@
+name: CI-CD Containerized Application Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  ###########################
+  #        CI JOBS         #
+  ###########################
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Secret Scan
+        uses: trufflesecurity/trufflehog@v3
+
+  static-code-analysis:
+    runs-on: ubuntu-latest
+    needs: secret-scan
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript
+      - uses: github/codeql-action/analyze@v2
+
+  dependency-scan:
+    runs-on: ubuntu-latest
+    needs: static-code-analysis
+    steps:
+      - uses: actions/checkout@v3
+      - name: Dependency Scan with Snyk
+        uses: snyk/actions/node@v1
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    needs: dependency-scan
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Tests
+        run: npm test -- --coverage
+
+  dockerfile-validation:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate Dockerfile with Hadolint
+        run: hadolint Dockerfile
+
+  build-docker:
+    runs-on: ubuntu-latest
+    needs: dockerfile-validation
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docker Image
+        run: docker build -t my-app:latest .
+
+  scan-image:
+    runs-on: ubuntu-latest
+    needs: build-docker
+    steps:
+      - name: Trivy Image Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "my-app:latest"
+
+  sign-image:
+    runs-on: ubuntu-latest
+    needs: scan-image
+    steps:
+      - name: Sign Docker Image with Cosign
+        run: cosign sign my-app:latest
+        env:
+          COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
+
+  push-image:
+    runs-on: ubuntu-latest
+    needs: sign-image
+    steps:
+      - name: Push Image to DockerHub
+        run: docker push my-app:latest
+
+  ###########################
+  #        CD JOBS         #
+  ###########################
+
+  pull-image:
+    runs-on: ubuntu-latest
+    needs: push-image
+    steps:
+      - name: Pull Docker Image
+        run: docker pull my-app:latest
+
+  verify-signature:
+    runs-on: ubuntu-latest
+    needs: pull-image
+    steps:
+      - name: Verify Docker Image Signature
+        run: cosign verify my-app:latest
+
+  pre-deploy-check:
+    runs-on: ubuntu-latest
+    needs: verify-signature
+    steps:
+      - name: Run Pre-Deployment Checks
+        run: echo "Checking PSP, network policy, namespace limits..."
+
+  deploy-k8s:
+    runs-on: ubuntu-latest
+    needs: pre-deploy-check
+    steps:
+      - name: Deploy to Kubernetes
+        run: kubectl apply -f k8s/deployment.yaml
+
+  post-deploy-validate:
+    runs-on: ubuntu-latest
+    needs: deploy-k8s
+    steps:
+      - name: Validate Deployment Health
+        run: kubectl get pods
+
+  test-suite:
+    runs-on: ubuntu-latest
+    needs: post-deploy-validate
+    steps:
+      - name: Run Automated Tests
+        run: npm run test:e2e
+
+  performance-test:
+    runs-on: ubuntu-latest
+    needs: test-suite
+    steps:
+      - name: Run JMeter Performance Test
+        run: jmeter -n -t test-plan.jmx -l results.jtl
+
+  dast-scan:
+    runs-on: ubuntu-latest
+    needs: performance-test
+    steps:
+      - name: Run OWASP ZAP DAST Scan
+        uses: zaproxy/action-full-scan@v0.7.0
+        with:
+          target: "https://my-app.example.com"
+
+  runtime-monitor:
+    runs-on: ubuntu-latest
+    needs: dast-scan
+    steps:
+      - name: Simulate Runtime Monitoring (Falco)
+        run: echo "Monitoring container runtime..."

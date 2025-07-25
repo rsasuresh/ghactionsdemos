@@ -1,7 +1,11 @@
 name: using events in Github action pipelines
 
 # on: workflow_dispatch
-on: push
+# on: push
+on:
+  pull_request:
+    types:
+      - opened
 
 jobs:
   build_job:
