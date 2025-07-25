@@ -1,7 +1,12 @@
 name: Running workflow in slef hosted runner of github actions
 
-on: workflow_dispatch
-
+on:
+  workflow_dispatch:
+    inputs:
+      Aprove:
+        description: "Approve workflow"
+        required: true
+        default: "Approve"
 jobs:
   testjob:
     runs-on: self-hosted
