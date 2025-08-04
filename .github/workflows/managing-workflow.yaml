@@ -1,0 +1,27 @@
+name: "managing workflow_triggers_in_gh actions"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test_job:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "print pwd"
+        run: |
+          pwd
+          echo "test one"
+      - name: "codecheckout"
+        uses: actions/checkout@v3
+
+  condition_and_filter_job:
+    needs: test_job
+    runs-on: "ubuntu-latest"
+    if: github.ref == 'refs/head/main'
+
+  matrix_job:
+    needs: [test_job, condition_and_filter_job]
+    runs-on: "ubuntu-latest"
+    strategy:
+      matrix:
+        node-version: [[14, 16, 18]]
