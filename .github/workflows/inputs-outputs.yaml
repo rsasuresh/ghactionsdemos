@@ -8,3 +8,16 @@ jobs:
     uses: "./.github/workflows/reusable.yaml"
     with:
       name: "Imran"
+  job-a:
+    runs-on: "ubuntu-latest"
+    outputs:
+      greeting: ${{ steps.set-output.outputs.greeting }}
+    steps:
+      - id: set-output
+        run: echo "hello world" >> $GITHUB_OUPUT
+
+  job-b:
+    needs: job-a
+    runs-on: "ubuntu-latest"
+    steps:
+      - run: echo ${{ needs.job-a.outputs.greeting }}
