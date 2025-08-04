@@ -1,0 +1,13 @@
+name: "handling inputs and outputs in github action workflows"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  job-input:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "using inputs"
+        uses: "./.github/workflows/reusable.yaml"
+        with:
+          name: "Imran"
