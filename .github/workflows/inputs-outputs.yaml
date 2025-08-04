@@ -14,7 +14,7 @@ jobs:
       greeting: ${{ steps.set-output.outputs.greeting }}
     steps:
       - id: set-output
-        run: echo "hello world" >> $GITHUB_OUPUT
+        run: echo "greeting=hello world" >> $GITHUB_OUTPUT
 
   job-b:
     needs: job-a
