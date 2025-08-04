@@ -18,6 +18,9 @@ jobs:
     needs: test_job
     runs-on: "ubuntu-latest"
     if: github.ref == 'refs/heads/main'
+    steps:
+      - name: "Run on main branch"
+        run: echo "Running on main branch"
 
   matrix_job:
     needs: [test_job, condition_and_filter_job]
@@ -25,3 +28,6 @@ jobs:
     strategy:
       matrix:
         node-version: [14, 16, 18]
+    steps:
+      - name: "Run on main branch"
+        run: echo "Running on main branch"
